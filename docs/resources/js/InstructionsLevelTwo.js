@@ -4,6 +4,8 @@ var HEIGHT = 600;
 var IMG_WIDTH = 100;
 var IMG_HEIGHT = 100;
 
+var KEY = "AMIG2_Stats";
+
 // Declare objects
 var lemons, water, sugar, pitcher, spoon, lemonade, notepad, ice;
 
@@ -22,6 +24,8 @@ var moveIceBack = false;
 var lemonadeFadeIn = false;
 
 var stepOne, stepTwo, stepThree, stepFour;
+
+var seconds, minutes, endTime;
 
 //store initial starting locations
 var lemonsX = IMG_WIDTH / 4;
@@ -62,6 +66,8 @@ PIXI.loader
 
 //This `setup` function will run when the image has loaded
 function setup() {
+
+    readFromStorage();
 
     addImages();
 
@@ -628,15 +634,15 @@ function animate() {
             spoon.visible = false;
             lemonade.alpha = 0.025;
 
-            var endTime = new Date();
+            endTime = new Date();
 
             var timeDiff = endTime - startTime;
             //Take off miliseconds
             timeDiff /= 1000;
 
-            var seconds = Math.round(timeDiff % 60);
+            seconds = Math.round(timeDiff % 60);
             timeDiff = Math.floor(timeDiff / 60);
-            var minutes = Math.round(timeDiff % 60);
+            minutes = Math.round(timeDiff % 60);
 
             var timeText = new PIXI.Text("Total Time: " + minutes + " min " + seconds + " sec", {
                 fontFamily: 'Comic Sans MS',
@@ -658,6 +664,8 @@ function animate() {
             missesText.y = HEIGHT - missesText.height;
 
             stage.addChild(missesText);
+
+            saveToStorage();
         } else {
             lemonade.alpha += 0.025;
         }
@@ -723,4 +731,58 @@ function swap(i, j) {
     var temp = objectList[i];
     objectList[i] = objectList[j];
     objectList[j] = temp;
+}
+
+function readFromStorage() {
+    var pastAttempts = JSON.parse(localStorage.getItem(KEY));
+
+    console.log(pastAttempts);
+
+    if (pastAttempts != null) {
+        var attempts = pastAttempts.split(";");
+        var pageStats = document.getElementById("stats");
+
+        for (var i = 0; i < attempts.length - 1; i++) {
+            console.log(i + " " + attempts[i]);
+
+            var thisStat = attempts[i].split(",");
+            var trElement = document.createElement("tr");
+            for (var j = 0; j < thisStat.length; j++) {
+                var thElement = document.createElement("th");
+                thElement.innerHTML = thisStat[j];//.replace("\"", "");
+                trElement.appendChild(thElement);
+            }
+            pageStats.appendChild(trElement);
+        }
+    }
+}
+
+function saveToStorage() {
+    var fullDate = (endTime.getMonth() + 1) + "-" + endTime.getDate() + "-" + endTime.getFullYear();
+    var timeOfDay = endTime.getHours();
+    if (endTime.getMinutes() < 10) {
+        timeOfDay += ":0" + endTime.getMinutes();
+    } else {
+        timeOfDay += ":" + endTime.getMinutes();
+    }
+
+    var statsStorage = fullDate + "," + timeOfDay + "," + misses + "," + minutes + " min " + seconds + " sec;";
+
+    var item = "";
+    if (localStorage.getItem(KEY) != null) {
+        item += JSON.parse(localStorage.getItem(KEY));
+    }
+    item += statsStorage;
+
+    localStorage.setItem(KEY, JSON.stringify(item));
+    var pageStats = document.getElementById("stats");
+    var trElement = document.createElement("tr");
+    statsStorage = statsStorage.replace(";", "");
+    var attempt = statsStorage.split(",");
+    for (var j = 0; j < attempt.length; j++) {
+        var thElement = document.createElement("th");
+        thElement.innerHTML = attempt[j];
+        trElement.appendChild(thElement);
+    }
+    pageStats.appendChild(trElement);
 }
