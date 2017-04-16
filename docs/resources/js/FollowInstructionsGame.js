@@ -31,6 +31,7 @@ var ingredientsY = 50;
 var misses = 0;
 
 var startTime = new Date();
+var start = new Date();
 
 var stage = new PIXI.Container(),
     renderer = PIXI.autoDetectRenderer(WIDTH, HEIGHT);
@@ -50,9 +51,52 @@ PIXI.loader
     ])
   .load(setup);
 
-var sound = new Howl({
+var tada = new Howl({
   src: ["resources/sounds/Shorter Yay!.mp3"]
 });
+
+var flourInstruction = new Howl({
+  src: ["resources/sounds/flourInstruction.mp3"]
+});
+
+var milkInstruction = new Howl({
+  src: ["resources/sounds/milkInstruction.mp3"]
+});
+
+var eggsInstruction = new Howl({
+  src: ["resources/sounds/eggsInstruction.mp3"]
+});
+
+var initialInstruction = new Howl({
+  src: ["resources/sounds/cake_Initial_Instructions.mp3"]
+});
+
+var notQuite = new Howl({
+  src: ["resources/sounds/notQuite.mp3"]
+});
+
+var crackEggs = new Howl({
+  src: ["resources/sounds/cracking eggs.mp3"]
+});
+
+var pourFlour = new Howl({
+  src: ["resources/sounds/Pouring Sugar.mp3"]
+});
+
+var pourMilk = new Howl({
+  src: ["resources/sounds/Pouring Milk.mp3"]
+});
+
+var stirringBowl = new Howl({
+  src: ["resources/sounds/Stirring Glass.mp3"]
+});
+
+var playSound = false;
+var initialInstructionsPlayed = false;
+tada.volume(0.2);
+stirringBowl.rate(1.1);
+crackEggs.rate(3);
+pourFlour.rate(2);
 
 
 //This `setup` function will run when the image has loaded
@@ -291,8 +335,14 @@ function onEggsDragEnd() {
     if (hitTestObjects(eggs, bowl)) {
       if (targetObject == "eggs") {
         //switch object
+        initialInstruction.stop();
+        eggsInstruction.stop();
+        crackEggs.play();
+
         eggs.visible = false;
         numCorrect++;
+        start = new Date();
+
         if (numCorrect >= objectList.length) {
           console.log("You made a cake!");
           cakeFadeIn = true;
@@ -308,8 +358,18 @@ function onEggsDragEnd() {
         }
       } else {
         //hit the bowl, but was not the right object
+        if (notQuite.playing()){
+          notQuite.stop();
+        }
+        eggsInstruction.stop()
+        milkInstruction.stop()
+        flourInstruction.stop();
+        initialInstruction.stop();
+        notQuite.play();
+
         misses++;
         moveEggsBack = true;
+        start = new Date();
       }
     }
 }
@@ -324,8 +384,14 @@ function onFlourDragEnd() {
       if (targetObject == "flour") {
         //animate success
         //switch object
+        flourInstruction.stop();
+        initialInstruction.stop();
+        pourFlour.play();
+
         flour.visible = false;
         numCorrect++;
+        start = new Date();
+
         if (numCorrect >= objectList.length) {
           console.log("You made a cake!");
           //make cake appear
@@ -340,8 +406,18 @@ function onFlourDragEnd() {
           }
         }
       } else {
+        if (notQuite.playing()){
+          notQuite.stop();
+        }
+        eggsInstruction.stop()
+        milkInstruction.stop()
+        flourInstruction.stop();
+        initialInstruction.stop();
+        notQuite.play();
+
         misses++;
         moveFlourBack = true;
+        start = new Date();
       }
     }
 }
@@ -356,8 +432,14 @@ function onMilkDragEnd() {
       if (targetObject == "milk") {
         //animate success
         //switch object
+        milkInstruction.stop();
+        initialInstruction.stop();
+        pourMilk.play();
+
         milk.visible = false;
         numCorrect++;
+        start = new Date();
+
         if (numCorrect >= objectList.length) {
           console.log("You made a cake!");
           cakeFadeIn = true;
@@ -371,8 +453,18 @@ function onMilkDragEnd() {
           }
         }
       } else {
+        if (notQuite.playing()){
+          notQuite.stop();
+        }
+        eggsInstruction.stop()
+        milkInstruction.stop()
+        flourInstruction.stop();
+        initialInstruction.stop();
+        notQuite.play();
+
         misses++;
         moveMilkBack = true;
+        start = new Date();
       }
     }
 }
@@ -387,12 +479,40 @@ function onDragMove() {
 
 function animate() {
     requestAnimationFrame(animate);
+    var end  = new Date();
 
-    if (stir) {
+    if ((end - startTime)/1000 > 2 && initialInstructionsPlayed == false){
+        initialInstruction.play();
+        initialInstructionsPlayed = true;
+    }
+
+    if (objectList[numCorrect] == "eggs" && (end - start)/1000 > 10
+            && notQuite.playing() == false) {
+        eggsInstruction.play();
+        start = new Date();
+    }
+    if (objectList[numCorrect] == "flour" && (end - start)/1000 > 10
+            && notQuite.playing() == false) {
+        flourInstruction.play();
+        start = new Date();
+    }
+    if (objectList[numCorrect] == "milk" && (end - start)/1000 > 10
+            && notQuite.playing() == false) {
+        milkInstruction.play();
+        start = new Date();
+    }
+
+    if (stir && ((pourMilk.playing() == false && pourFlour.playing() == false
+          && crackEggs.playing() == false) || i < 200)) {
       if (!spoon.visible) {
           spoon.visible = true;
       }
+
       if (i > 0) {
+        if (playSound == false){
+          playSound = true;
+          stirringBowl.play();
+        }
         if (forwards) {
           spoon.x += 3;
           if (spoon.x + IMG_WIDTH + 5 >= bowl.x + IMG_WIDTH * 3) {
@@ -408,9 +528,11 @@ function animate() {
         }
         i--;
       } else {
+        playSound = false;
         spoon.visible = false;
         stir = false;
         i = 200;
+        start = new Date();
       }
     }
 
@@ -498,8 +620,14 @@ function animate() {
     //Signals completion of the game
     if (cakeFadeIn) {
       if (!cake.visible) {
+        milkInstruction.stop();
+        flourInstruction.stop();
+        eggsInstruction.stop();
+        pourMilk.stop();
+        pourFlour.stop();
+        crackEggs.stop();
 
-        sound.play();
+        tada.play();
 
         stepThree.style.fill = '#15db19';
         cake.visible = true;
