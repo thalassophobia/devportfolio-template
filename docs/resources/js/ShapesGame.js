@@ -1,20 +1,34 @@
-var app = new PIXI.Application(800, 600, { antialias: true });
+var app = new PIXI.Application(800, 600, {backgroundColor: 0x000000});
 document.body.appendChild(app.view);
 
 app.stage.interactive = true;
 
-var square = new PIXI.Graphics();
 var squareHole = new PIXI.Graphics();
 
-var circle = new PIXI.Graphics();
 var circleHole = new PIXI.Graphics();
 
-var star = new PIXI.Graphics();
 var starHole = new PIXI.Graphics();
 
 var rectWidth = 100;
 var rectHeight = 100;
 var circleRadius = 50;
+
+var starTexture = PIXI.Texture.fromImage('resources/images/star3.png');
+var backgroundTexture = PIXI.Texture.fromImage('resources/images/shapes_background.png');
+var backgroundSprite = new PIXI.Sprite(backgroundTexture);
+
+var starSprite = new PIXI.Sprite(starTexture);
+
+
+var boxContainer = new PIXI.Container();
+var starContainer = new PIXI.Container();
+var ballContainer = new PIXI.Container();
+
+starSprite.scale.x = .2;
+starSprite.scale.y = .2;
+starSprite.x = 90;
+starSprite.y = 450;
+
 
 var squareContainerXPos = 500;
 var squareContainerYPos = 100;
@@ -47,36 +61,42 @@ function drawStarContainer() {
     starHole.lineTo(550, 100);
 }
 
+var boxSprite;
 //Draws a dragable square
-function drawSquare(x, y) {
-    square.lineStyle(2, 0x0000FF, 1);
-    square.beginFill(0x0000FF, 1);
-    square.drawRect(x, y, rectWidth, rectHeight);
-    square.endFill();
+function drawSquare() {
+    var boxTexture = PIXI.Texture.fromImage('resources/images/RTS_Crate.png');
+    boxSprite = new PIXI.Sprite(boxTexture);
 
-    square.interactive = true;
-    square.buttonMode = true;
+    boxSprite.anchor.set(-1);
+    boxSprite.scale.set(.2);
+
+    boxSprite.interactive = true;
+    boxSprite.buttonMode = true;
 
     //pointer events for touch AND mouse
-    square
+    boxSprite
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onRectDragMove);
 }
 
+var tennisBallSprite;
 //Draws a dragable circle
-function drawCircle(x, y) {
-    circle.lineStyle(0);
-    circle.beginFill(0xFF0000, 1);
-    circle.drawCircle(x, y, circleRadius);
-    circle.endFill();
+function drawCircle() {
+    var tennisBallTexture = PIXI.Texture.fromImage('resources/images/tennisball512.png');
+    tennisBallSprite = new PIXI.Sprite(tennisBallTexture);
 
-    circle.interactive = true;
-    circle.buttonMode = true;
+    tennisBallSprite.scale.set(.2);
+    tennisBallSprite.anchor.set(.1);
+    tennisBallSprite.x = 100;
+    tennisBallSprite.y = 300;
+
+    tennisBallSprite.interactive = true;
+    tennisBallSprite.buttonMode = true;
 
     //pointer events for touch AND mouse
-    circle
+    tennisBallSprite
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
@@ -111,11 +131,8 @@ function drawStar() {
         .on('pointermove', onStarDragMove);
 }
 
-drawStar();
-drawCircle(150, 300);
-star.position.x = -400;
-star.position.y = 280;
-drawSquare(100, 100);
+drawCircle();
+drawSquare();
 
 drawSquareContainer(squareContainerXPos, squareContainerYPos);
 drawCircleContainer(circleContainerXPos, circleContainerYPos);
@@ -123,10 +140,10 @@ starHole.position.x = 0;
 starHole.position.y = 300;
 drawStarContainer();
 
-
-app.stage.addChild(square);
-app.stage.addChild(circle);
-app.stage.addChild(star);
+app.stage.addChild(backgroundSprite);
+app.stage.addChild(starSprite);
+app.stage.addChild(tennisBallSprite);
+app.stage.addChild(boxSprite);
 app.stage.addChild(squareHole);
 app.stage.addChild(circleHole);
 app.stage.addChild(starHole);
@@ -160,6 +177,7 @@ function onRectDragMove() {
             this.x = squareContainerXPos - rectWidth;
             this.y = squareContainerYPos - rectHeight;
             this.interactive = false;
+            this.alpha = 1;
         }
     }
 }
